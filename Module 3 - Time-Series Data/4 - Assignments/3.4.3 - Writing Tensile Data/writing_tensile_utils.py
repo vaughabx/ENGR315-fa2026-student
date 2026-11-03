@@ -1,5 +1,6 @@
 import math
-
+import os
+import sys
 import numpy as np
 
 
@@ -71,7 +72,18 @@ def calculate_stress(force, sample_diameter):
 
     # copy your calculate_stress() from Tensile Testing here
 
-    return None
+
+    # calculate the cross-section area (mm^2)
+    cross_sectional_area = math.pi * (sample_diameter / 2) ** 2
+
+    # calculate stress (MPa) from load (kN) and cross-sectional area
+    calculated_stress = force * 1000 / cross_sectional_area
+
+    # delete this line and replace it with your own
+    stress = calculated_stress
+
+    return stress
+     
 
 
 def calculate_max_strength_strain(strain, stress):
@@ -85,8 +97,14 @@ def calculate_max_strength_strain(strain, stress):
     """
 
     # copy your calculate_max_strength_strain() from Tensile Testing here
-
-    return -1, -1
+     # calculate the maximum stress experienced
+    ultimate_tensile_stress = np.max(stress)
+    
+        # calculate the maximum strain experienced
+    fracture_strain = np.max(strain)
+    
+    return ultimate_tensile_stress, fracture_strain
+    
 
 
 def calculate_elastic_modulus(strain, stress):
@@ -102,8 +120,71 @@ def calculate_elastic_modulus(strain, stress):
     """
 
     # copy your calculate_elastic_modulus() from Tensile Testing here
-
-    return None, None, None
+     # Step #1: Given the forces and sample diameter, calculate the strain
+    
+    if stress is None:
+            print("Error! No stress returned. Did you fill in the calculate_stress() method?")
+            sys.exit(-1)
+    
+        # use scatter plot so we don't assume a line (yet)
+    plt.scatter(strain, stress, label="Stress - Strain")
+    plt.xlabel('Strain (mm/mm)')
+    plt.ylabel('Stress (MPa)')
+    plt.title('Stress-Strain Curve for Sample ' + sample_name)
+    plt.show()
+    
+        # Step #2: Calculate basic parameters such as the ultimate tensile strength
+        # and fracture strain
+    
+        # calculate easy variables
+    ultimate_tensile_strength, fracture_strain = calculate_max_strength_strain(strain, stress)
+    
+    if ultimate_tensile_strength==-1 or fracture_strain ==-1:
+            print("Error! Tensile Strength or Fracture Strain returned as -1. Did you complete the calculate_max_strength() method?")
+            sys.exit(-1)
+    
+    print("Ultimate Tensile Stress is ", ultimate_tensile_strength, "MPa")
+    print("Fracture Strain is ", 100 * fracture_strain, " percent")
+    
+        # Step #3: Use the Secant Modulus at 40% of Peak Stress
+        # to determine elastic modulus
+    
+    linear_index, slope, intercept = calculate_elastic_modulus(strain, stress)
+    
+    if linear_index is None or slope is None or intercept is None:
+            print("Incorrect value determined by calculate_elastic_modulus() did you implement that function?")
+            sys.exit(-1)
+    
+    print("Elastic Modulus is ", slope / 1000, 'GPa')
+    
+        # show the original curve indicating the secant modulus at 40%
+    plt.scatter(strain, stress, label="Stress - Strain")
+    plt.xlabel('Strain (mm/mm)')
+    plt.ylabel('Stress (MPa)')
+    plt.title('Stress-Strain Curve for Sample ' + sample_name)
+    
+    plt.scatter(strain[linear_index], stress[linear_index], marker="v", label="Secant Modulus at 40%")
+    
+    plt.legend()
+    plt.show()
+    
+        # now plot the linear region for the best fit line
+    linear_strain = strain[0:linear_index]
+    linear_stress = stress[0:linear_index]
+    
+    plt.scatter(linear_strain, linear_stress, label="Stress - Strain")
+    plt.xlabel('Strain (mm/mm)')
+    plt.ylabel('Stress (MPa)')
+    plt.title('Linear Region for Sample ' + sample_name + ' with best fit')
+    
+        # compute line y=mx+b
+    best_fit_line = slope * linear_strain + intercept
+    plt.plot(linear_strain, best_fit_line, label="Best Linear Fit")
+    
+    plt.legend()
+    plt.show()
+    
+    
 
 
 def calculate_percent_offset(slope, strain, stress):
@@ -119,7 +200,29 @@ def calculate_percent_offset(slope, strain, stress):
 
     # copy your calculate_percent_offset() from Tensile Testing here
 
-    return None, -1
+    # set the desired offset for the line
+    offset = 0.002
+
+    # calculate the offset line: y=m(x-0.002) + 0
+    offset_line = slope * (strain - offset)
+
+    # measure distance from all points on graph to this line. Consider using the
+    # abs() method to ensure values are positive
+    distance = np.abs(stress - offset_line)
+
+    # use argmin to find the index where the distance is minimal
+    intercept_index = np.argmin(distance)
+
+    return offset_line, intercept_index
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    # modify this line to select different materials/folders within tensile/
+    material_folder = "1045CR"
+
+    # modify this line to select different samples in the material folder
+    sample_name = "C01A1045CR_1"
 
 
 def calculate_yield_strength(strain, stress, modulus):
