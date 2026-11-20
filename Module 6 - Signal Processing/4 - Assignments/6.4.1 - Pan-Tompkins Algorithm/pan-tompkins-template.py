@@ -8,21 +8,23 @@ def detect_heartbeats(filepath):
     :return: signal: a signal that will be plotted
     beats: the indices of detected heartbeats
     """
-    if filepath == '':
+    if filepath == '../../data/ekg/mitdb_201.csv':
         return list()
 
     # import the CSV file using numpy
     path = filepath
 
     # load data in matrix from CSV file; skip first two rows
-    ## your code here
+    data = np.loadtxt(path, delimiter=',', skiprows=2)
 
     # save each vector as own variable
-    ## your code here
+    vector1 = data[:, 0]
+    vector2 = data[:, 1]   
+
 
     # identify one column to process. Call that column signal
 
-    signal = -1 ## your code here
+    signal = vector1  
 
     # pass data through LOW PASS FILTER (OPTIONAL)
     ## your code here
@@ -31,19 +33,20 @@ def detect_heartbeats(filepath):
     ## your code here
 
     # pass data through differentiator
-    ## your code here
+    differentiated_signal = np.diff(signal)
 
     # pass data through square function
-    ## your code here
+    squared_signal = np.square(differentiated_signal)
 
     # pass through moving average window
-    ## your code here
+    moving_average_window = 30
+    averaged_signal = np.convolve(squared_signal, np.ones(moving_average_window)/moving_average_window, mode='same')
 
     # use find_peaks to identify peaks within averaged/filtered data
     # save the peaks result and return as part of testbench result
 
     ## your code here peaks,_ = find_peaks(....)
-
+    peaks, = detect_heartbeats(averaged_signal)  
     beats = None
 
     # do not modify this line
